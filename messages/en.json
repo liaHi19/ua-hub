@@ -1,0 +1,16 @@
+{
+  "Site": {
+    "name": "UA Hub",
+    "tagline": "Ukrainian community events across the UK"
+  },
+  "Nav": {
+    "events": "Events",
+    "submit": "Submit an event",
+    "signIn": "Sign in"
+  },
+  "Home": {
+    "heading": "Ukrainian community events across the UK",
+    "subheading": "One place to find what's happening — in your city and every other UK city.",
+    "cta": "Submit an event"
+  }
+}
