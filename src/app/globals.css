@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Brand palette (shared with the OG card spec) */
+  --color-brand-cream: var(--brand-cream);
+  --color-brand-navy: var(--brand-navy);
+  --color-brand-terracotta: var(--brand-terracotta);
+
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-noto-serif);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+}
+
+:root {
+  --radius: 0.625rem;
+
+  --brand-cream: #fff8ec;
+  --brand-navy: #1b2a41;
+  --brand-terracotta: #c46a4a;
+
+  --background: #ffffff;
+  --foreground: #1b2a41;
+  --card: #ffffff;
+  --card-foreground: #1b2a41;
+  --popover: #ffffff;
+  --popover-foreground: #1b2a41;
+  --primary: #1b2a41;
+  --primary-foreground: #fff8ec;
+  --secondary: #f4f1ea;
+  --secondary-foreground: #1b2a41;
+  --muted: #f4f1ea;
+  --muted-foreground: #5b6472;
+  --accent: #c46a4a;
+  --accent-foreground: #fff8ec;
+  --destructive: #b3261e;
+  --destructive-foreground: #ffffff;
+  --border: #e5e1d8;
+  --input: #e5e1d8;
+  --ring: #c46a4a;
+}
+
+.dark {
+  --background: #14141a;
+  --foreground: #ededed;
+  --card: #1b1b22;
+  --card-foreground: #ededed;
+  --popover: #1b1b22;
+  --popover-foreground: #ededed;
+  --primary: #fff8ec;
+  --primary-foreground: #1b2a41;
+  --secondary: #262630;
+  --secondary-foreground: #ededed;
+  --muted: #262630;
+  --muted-foreground: #a1a1aa;
+  --accent: #c46a4a;
+  --accent-foreground: #fff8ec;
+  --destructive: #e5484d;
+  --destructive-foreground: #ffffff;
+  --border: #2c2c36;
+  --input: #2c2c36;
+  --ring: #c46a4a;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), system-ui, sans-serif;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-serif), Georgia, serif;
+  }
+}

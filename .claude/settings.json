@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm  ci)",
+      "Bash (npx tsc:*)",
+      "Bash(pnpm typecheck *)",
+      "Read",
+      "Edit"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(.env.local)",
+      "Bash(cat .env:*)",
+      "Bash(rm -rf:*)"
+    ],
+    "ask": ["Bash(git push:*)", "WebFetch"]
+  }
+}
