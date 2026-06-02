@@ -45,7 +45,7 @@ Source: [docs/prd/main.md](../prd/main.md) §"Session 1". **Depends on:** nothin
 - [ ] `pnpm add next-intl`.
 - [ ] `src/i18n/routing.ts` — locales `['en','uk']`, `defaultLocale: 'en'`, URL-prefixed.
 - [ ] `src/i18n/request.ts` — load the per-request message catalog.
-- [ ] `middleware.ts` — next-intl locale middleware with a matcher that **excludes `/api`, `/admin`, `/_next`, static assets** (only public pages are localized).
+- [ ] `proxy.ts` — next-intl locale proxy (Next.js 16's `middleware.ts` replacement) with a matcher that **excludes `/api`, `/admin`, `/_next`, static assets** (only public pages are localized).
 - [ ] Move pages under `src/app/[locale]/` (`layout.tsx` + `page.tsx`); wrap with `NextIntlClientProvider`.
 - [ ] `messages/en.json` + `messages/uk.json` — seed a handful of chrome keys (e.g. site title, nav, home heading). Ukrainian strings can be assistant-drafted now; native review lands in Week 3.
 - [ ] Verify `/` → redirects to `/en`; `/uk` renders Ukrainian chrome; English is the fallback locale.
@@ -96,6 +96,6 @@ Source: [docs/prd/main.md](../prd/main.md) §"Session 1". **Depends on:** nothin
 
 - `create-next-app` won't run in this non-empty repo → scaffold-then-merge (§2).
 - Tailwind **v4** uses CSS config — creating `tailwind.config.*` silently does nothing and signals a v3 mindset.
-- The locale middleware matcher **must** exclude `/api` and `/admin` (those surfaces stay un-localized, English-only).
+- The locale proxy (`proxy.ts`) matcher **must** exclude `/api` and `/admin` (those surfaces stay un-localized, English-only).
 - Keep Ukrainian message values present (even if assistant-drafted) so `/uk` isn't empty; English fallback covers gaps.
 - `git push` and `WebFetch` require approval (see [.claude/settings.json](../../.claude/settings.json)).
