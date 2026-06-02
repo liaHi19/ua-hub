@@ -1,0 +1,173 @@
+// UA Hub — Phase 1 data model.
+// Source of truth for fields: standards/database-schema.md.
+// Prisma 7 (query compiler) + Neon serverless via @prisma/adapter-neon.
+// All datetimes are stored in UTC.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  runtime  = "nodejs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum EventType {
+  CONCERT
+  GATHERING
+  KIDS
+  LANGUAGE
+  SUPPORT
+  FUNDRAISER
+  OTHER
+}
+
+enum Status {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum NotificationType {
+  EVENT_APPROVED
+  EVENT_REJECTED
+  EVENT_EDITED
+  EVENT_CANCELLED
+  EVENT_DELETED
+  OWNER_CANCELLED
+  OWNER_DELETED
+}
+
+model Organization {
+  id         String   @id @default(cuid())
+  slug       String   @unique // url-safe, e.g. "bristol-odesa"
+  nameEn     String
+  nameUk     String?
+  website    String?
+  logoUrl    String?
+  isVerified Boolean  @default(false) // admin grant; display badge only in Phase 1
+  events     Event[]
+  createdAt  DateTime @default(now())
+
+  @@index([isVerified])
+}
+
+model User {
+  id                        String         @id @default(cuid())
+  email                     String         @unique
+  passwordHash              String // bcrypt/argon2; never plaintext
+  emailVerified             DateTime? // set when the verification link is confirmed (enforcement deferred until domain live)
+  firstName                 String?
+  lastName                  String?
+  phone                     String? // admin-only contact; never rendered publicly
+  messengerUrl              String? // https:// link to Telegram/WhatsApp/Signal; admin-only; scheme-validated
+  contactVerifiedAt         DateTime? // admin marks the submitter's contact as verified
+  emailNotificationsEnabled Boolean        @default(true) // future per-user toggle (settings UI = Phase 2)
+  deletedAt                 DateTime? // account soft-delete + PII anonymization; the user's Events are retained
+  role                      Role           @default(USER)
+  events                    Event[]
+  notifications             Notification[]
+  createdAt                 DateTime       @default(now())
+}
+
+model Venue {
+  id             String   @id @default(cuid())
+  name           String // e.g. "St Mary Redcliffe Church"
+  nameNormalized String // lowercase trim, for dedup
+  addressLine    String? // e.g. "12 Redcliffe Way"
+  postcode       String // validated UK postcode
+  city           String // resolved via postcodes.io + city resolver
+  region         String // resolved via postcodes.io ("South West")
+  lat            Float?
+  lng            Float?
+  events         Event[]
+  createdAt      DateTime @default(now())
+
+  @@unique([postcode, nameNormalized]) // prevents race-condition duplicates
+  @@index([city])
+  @@index([postcode])
+}
+
+model Event {
+  id                     String         @id @default(cuid())
+  titleEn                String
+  titleUk                String?
+  descriptionEn          String // plain text + line breaks only (no markdown, no HTML)
+  descriptionUk          String?
+  startsAt               DateTime
+  endsAt                 DateTime? // nullable — many drop-in events have no defined end
+  isOnline               Boolean        @default(false)
+  onlineUrl              String?
+  externalUrl            String? // optional "more info" link (organizer's own page, Facebook event, etc.)
+  publicContactEmail     String? // OPT-IN public contact email shown on the event page (distinct from the submitter's private account email)
+  publicContactMessenger String? // OPT-IN public Telegram/WhatsApp/Signal link shown on the event page; https:// only, scheme-validated
+  venueId                String? // null only when isOnline = true
+  venue                  Venue?         @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  imageUrl               String?
+  eventType              EventType      @default(OTHER)
+  organizationId         String?
+  organization           Organization?  @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  organizerName          String? // fallback display label when organizationId is null (individual submitter)
+  status                 Status         @default(PENDING)
+  cancelledAt            DateTime?
+  cancellationNote       String?
+  deletedAt              DateTime? // soft-delete by owner or admin; excluded from list + 404 on detail
+  createdById            String
+  // Restrict: events never cascade-delete with an account; a user with events must be soft-deleted + anonymized.
+  createdBy              User           @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  notifications          Notification[]
+  createdAt              DateTime       @default(now())
+  approvedAt             DateTime?
+
+  @@index([startsAt, status])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String // recipient
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  eventId   String?
+  // SetNull: keep the user-facing notification even if the event row is hard-deleted.
+  event     Event?           @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  readAt    DateTime? // in-app read state
+  emailedAt DateTime? // set once the email is sent (deferred until domain live)
+  createdAt DateTime         @default(now())
+
+  @@index([userId, readAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+}
+
+model ContactMessage {
+  id         String    @id @default(cuid())
+  fromUserId String? // loose ref to sender's User (null if logged out or later anonymized)
+  fromName   String?
+  fromEmail  String // reply-to; required so the admin can respond
+  body       String
+  readAt     DateTime? // admin inbox read state
+  createdAt  DateTime  @default(now())
+
+  @@index([readAt])
+}
