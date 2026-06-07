@@ -7,7 +7,9 @@ import type { Role } from "@/generated/prisma/enums";
 // (both Node-only). The Credentials provider with its DB lookup lives in `auth.ts`.
 export const authConfig = {
   pages: {
-    signIn: "/auth/signin",
+    // Locale-less path; the next-intl proxy redirects to the active /en|/uk prefix.
+    // Lives in the (auth) route group, so the URL has no /auth/ segment.
+    signIn: "/signin",
   },
   session: { strategy: "jwt" },
   // Providers are added in the Node `auth.ts` (Credentials needs Prisma + bcrypt).

@@ -12,5 +12,47 @@
     "heading": "Ukrainian community events across the UK",
     "subheading": "One place to find what's happening — in your city and every other UK city.",
     "cta": "Submit an event"
+  },
+  "Auth": {
+    "fields": {
+      "email": "Email",
+      "password": "Password",
+      "firstName": "First name",
+      "lastName": "Surname",
+      "phone": "Phone",
+      "messengerUrl": "Messenger link"
+    },
+    "contact": {
+      "legend": "Contact details",
+      "note": "Used for admin verification only — never shown publicly. Provide a phone number or an https:// messenger link (at least one)."
+    },
+    "register": {
+      "title": "Create an account",
+      "subtitle": "Register to submit and manage events.",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "haveAccount": "Already have an account?"
+    },
+    "signIn": {
+      "title": "Sign in",
+      "subtitle": "Welcome back.",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "noAccount": "Don't have an account?"
+    },
+    "errors": {
+      "emailRequired": "Email is required.",
+      "emailInvalid": "Enter a valid email address.",
+      "passwordRequired": "Password is required.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "passwordWeak": "Password must contain at least one letter and one number.",
+      "firstNameRequired": "First name is required.",
+      "lastNameRequired": "Surname is required.",
+      "contactRequired": "Provide at least one contact channel: a phone number or an https:// messenger link.",
+      "messengerUrlInvalid": "Messenger link must start with https://",
+      "registrationFailed": "We couldn't complete your registration. Please try again.",
+      "invalidCredentials": "Invalid email or password.",
+      "genericError": "Something went wrong. Please try again."
+    }
   }
 }

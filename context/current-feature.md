@@ -1,11 +1,4 @@
-# Current Feature: Auth Foundation & Session (Session 3a)
-
-## Auth.js v5 (JWT credentials) — foundation, guards & first admin
-
-Stand up an Auth.js v5 (or `jose` fallback) JWT credentials session that stamps
-`id` + `role`, with reusable server-side guards, a bootstrapped first admin, and a
-protected route that rejects anonymous requests. No registration/sign-in UI yet
-(that's 03b).
+# Current Feature: Session 3b — Registration, Sign-in & Contact Capture
 
 ## Status
 
@@ -13,93 +6,87 @@ In Progress
 
 ## Goals
 
-- **Spike first:** confirm Auth.js v5 (`next-auth@beta`) works on Next 16 / React 19
-  under Turbopack + `pnpm build`. If incompatible, fall back to hand-rolled
-  Credentials + `jose` JWT cookie session — record the decision here.
-- Split config: `auth.config.ts` (edge-safe — `pages`, JWT strategy, `jwt`/`session`
-  callbacks stamping `id` + `role`; **no Prisma/bcrypt**) vs `auth.ts` (Node —
-  Credentials provider whose `authorize` looks up the user via Prisma, rejects
-  soft-deleted users, verifies hash with `bcryptjs`; exports `handlers/auth/signIn/signOut`).
-- `src/app/api/auth/[...nextauth]/route.ts` re-exports `handlers`.
-- `next-auth.d.ts` types `session.user.role` + `id` (no `any`).
-- Authorization helpers `requireUser()` / `requireAdmin()` in `src/features/auth/guards.ts`,
-  enforced at the service/page layer — **not** in `proxy.ts` (Prisma can't run on edge).
-- Prove rejection with a minimal guarded surface (`GET /api/me`: 401 anon; `{ id, role }` authed).
-- Bootstrap the first admin (flip `role` in Prisma Studio or a one-off `scripts/set-admin.ts`);
-  no public self-elevation path. Document how it was done.
-- `pnpm typecheck` + `pnpm lint` + `pnpm build` green before commit.
+- The credentials loop: a user registers (capturing admin-only contact data) and signs in via localized pages; register → sign-in works end-to-end.
+- Responses never leak whether an email already exists (non-enumerating).
+- Passwords hashed (never plaintext); JWT session persists across requests.
+- Registration blocked without first name + surname + ≥1 contact channel (phone or `https://` messenger URL).
+- `/uk/{signin,register}` renders Ukrainian chrome; `/en/{signin,register}` renders English.
 
 ## Notes
 
-- **Branch:** `feature/session-3a-auth-foundation` off `dev`. Ask before committing; no AI attribution.
-- **Dependencies:** `pnpm add next-auth@beta zod bcryptjs` + `-D @types/bcryptjs`
-  (`bcryptjs` = pure JS, no native build; `argon2` acceptable).
-- **Env:** `npx auth secret` → `AUTH_SECRET` in `.env.local`; mirror name to `.env.example`
-  + Vercel (all envs). Add `AUTH_EMAIL_ENABLED=false` (the deferral switch reused by 03c +
-  Sessions 8/13) — default **off**.
-- **Edge/Node split is critical:** Prisma 7 + Neon adapter and `bcryptjs` are Node-only.
-  Keep DB/hash work out of `auth.config.ts` and `proxy.ts`.
-- **`proxy.ts` stays next-intl-only** — do NOT add auth to it.
-- `<SessionProvider>` in root layout only if a client component needs `useSession`;
-  prefer `auth()` in server components.
-- The §1 spike is non-optional; keep the `jose` fallback ready.
+Source: [docs/todos/03b-registration-signin.md](../docs/todos/03b-registration-signin.md); parent [Session 3 overview](../docs/todos/03-auth-contact-capture.md). **Depends on:** 03a (auth foundation — engine, guards, session), already merged.
+
+### 1. Registration + contact capture — `/register`
+
+- Zod schema (`src/features/users/`): `email` (format), `password` (min length + basic strength), `firstName` **required**, `lastName` **required**, `phone?`, `messengerUrl?`; refine enforcing **≥1 of `{phone, messengerUrl}`** and `messengerUrl` **`https://` only**.
+- Server action: hash password (`bcryptjs`), create `User` (`role: USER`, `emailVerified: null`), return `{ success, data, error }` shape (coding standard).
+- **Non-enumerating response** — never reveal whether an email already exists.
+- On success: establish session (`signIn("credentials", …)`) or redirect to `/signin`.
+- Contact data (`firstName`/`lastName`/`phone`/`messengerUrl`) is **admin-only — never rendered publicly**; add UI note "for admin verification, not shown publicly".
+
+### 2. Sign-in — `/signin`
+
+- Credentials form → `signIn`; on failure show **generic "invalid email or password"**; on success redirect to `callbackUrl` or `/`.
+- CSRF: Auth.js covers its own POST routes; Server Actions are origin-checked by the framework; cookie JWT only (no bearer path).
+
+### 3. Localized pages + i18n
+
+- Pages in the `(auth)` route group at `src/app/[locale]/(auth)/{signin,register}` → `/en/signin`, `/uk/register` (group folder is URL-invisible, so **no `/auth/` segment**); forms in `src/components/auth/`.
+- Auth.js `pages: { signIn: "/signin" }`; keep post-auth redirects locale-aware via i18n navigation helpers.
+- Add EN/UK keys for auth chrome + validation/error messages to `messages/en.json` + `uk.json`.
+
+### Out of scope
+
+- Verification / reset token flows → 03c. Profile edit / account delete → Session 9.
+
+### Gotchas
+
+- `messengerUrl` is `https://`-only; `lib/clean-url.ts` is a Session 6 deliverable → add a minimal check now (Zod refine or tiny `lib/validate-url.ts`).
+- Fully masking "email already exists" depends on verify email (Session 13); pre-domain keep generic copy + note the limitation.
+- Locale-prefixed auth pages must agree with Auth.js `pages` config + the next-intl proxy (`proxy.ts`) — test `/uk/signin` explicitly.
 
 ## Decisions
 
-- **Spike result — Auth.js v5 stays.** `next-auth@5.0.0-beta.31` works on Next 16.2.6 /
-  React 19.2.4 under Turbopack; `pnpm typecheck` + `lint` + `build` all green. The `jose`
-  fallback is **not** needed.
-- **JWT type augmentation:** `next-auth.d.ts` augments `Session` (merges cleanly) and
-  `next-auth/jwt`'s `JWT`. In this beta, `JWT extends Record<string, unknown>` and the
-  re-export from `@auth/core/jwt` (not resolvable at the project root) means the callback's
-  `token` is seen as `unknown`-valued — so the `session` callback narrows `token.id`/`token.role`
-  with explicit casts (no `any`). See [src/features/auth/auth.config.ts](../src/features/auth/auth.config.ts).
-- **`bcryptjs` types:** dropped the deprecated `@types/bcryptjs` stub — `bcryptjs@3` ships its
-  own types.
+- **Zod messages as i18n keys.** Schemas in [src/features/users/schemas.ts](../src/features/users/schemas.ts) emit stable keys (e.g. `passwordWeak`); server actions translate them via `getTranslations("Auth.errors")` so EN/UK validation copy lives in the catalogs, not in code.
+- **Session established on register.** `registerAction` calls `signIn("credentials", { redirectTo: "/${locale}" })` after `user.create`, so register → signed-in is one step (satisfies the end-to-end goal). On `AuthError` it falls back to a generic message.
+- **Non-enumeration.** Any `user.create` failure (incl. P2002 email collision) returns one generic `registrationFailed` message; sign-in failures return one generic `invalidCredentials`. Full duplicate-masking deferred to Session 13 (email verify) — noted in code.
+- **`https://`-only messenger check** via minimal [src/lib/validate-url.ts](../src/lib/validate-url.ts) (`isHttpsUrl`); full `lib/clean-url.ts` remains a Session 6 deliverable.
+- **Open-redirect guard.** `signInAction` only honors path-relative same-origin `callbackUrl`s (must start with `/`, not `//`); otherwise defaults to `/${locale}`.
+- **`(auth)` route group.** Pages live in a URL-invisible `(auth)` group with a shared layout, so URLs are `/{locale}/signin` and `/{locale}/register` (no `/auth/` segment). Auth.js `pages.signIn` and `guards.ts` redirect targets updated from `/auth/signin` → `/signin` to match.
+- **Password strength:** min 8 chars + at least one letter and one digit (basic; richer policy out of scope).
+- Added shadcn-style [Input](../src/components/ui/input.tsx) + [Label](../src/components/ui/label.tsx) primitives to match the existing `button.tsx` convention.
+
+### Files
+
+- Schemas: [src/features/users/schemas.ts](../src/features/users/schemas.ts)
+- Server actions: [src/actions/auth.ts](../src/actions/auth.ts)
+- Forms: [src/components/auth/RegisterForm.tsx](../src/components/auth/RegisterForm.tsx), [SignInForm.tsx](../src/components/auth/SignInForm.tsx)
+- Pages: [src/app/[locale]/(auth)/register/page.tsx](<../src/app/[locale]/(auth)/register/page.tsx>), [signin/page.tsx](<../src/app/[locale]/(auth)/signin/page.tsx>), shared [layout.tsx](<../src/app/[locale]/(auth)/layout.tsx>)
+- i18n keys: `Auth` namespace in [messages/en.json](../messages/en.json) + [messages/uk.json](../messages/uk.json)
 
 ## First-admin bootstrap
 
-No public self-elevation path. Promote/seed the owner's admin from the CLI (needs
-`DATABASE_URL` in `.env.local`):
-
-```bash
-pnpm dlx tsx scripts/set-admin.ts <email> [password]
-```
-
-- Existing user → role set to `ADMIN`.
-- No such user **and** a password given → creates a verified `ADMIN` (seeds a sign-in-able
-  account before the 03b registration UI). Alternatively flip `role` in `pnpm db:studio`.
-
 ## Owner steps (need credentials — not done in code)
-
-- [ ] `npx auth secret` → writes `AUTH_SECRET` to `.env.local`; mirror to Vercel (all envs).
-      Without it `auth()` throws at runtime, so the 401 proof + sign-in can't be exercised yet.
-- [ ] Add `AUTH_EMAIL_ENABLED=false` to `.env.local` + Vercel (name already in `.env.example`).
-- [ ] Run `pnpm dlx tsx scripts/set-admin.ts <email> <password>` to seed the first admin, then
-      verify `GET /api/me` (401 anon → `{ id, role }` after sign-in via `POST /api/auth/...`).
 
 ## Acceptance — all must pass
 
-- [ ] A protected route / guard rejects an anonymous request. _(code in place: `GET /api/me`
-      + `getAuthedUser()`; runtime verification pending `AUTH_SECRET` — owner step above.)_
-- [ ] Signing in a seeded user yields a JWT session that persists and carries `id` + `role`
-      (full register→sign-in e2e lands in 03b). _(pending `AUTH_SECRET` + seeded admin.)_
-- [x] `pnpm typecheck` + `pnpm lint` + `pnpm build` green.
-
-## Out of scope
-
-- Registration / sign-in UI → 03b; token flows (verification/reset) → 03c.
+- [ ] Register → password sign-in works end-to-end.
+- [ ] Passwords hashed (never plaintext); the JWT session persists across requests.
+- [ ] Registration blocked without first name + surname + ≥1 contact channel (phone or `https://` messenger URL).
+- [ ] Register / sign-in responses don't reveal whether an email exists.
+- [ ] `/uk/{signin,register}` renders Ukrainian chrome; `/en/{signin,register}` English.
 
 ## References
 
-- Source todo: `@docs/todos/03a-auth-foundation.md`
-- Parent overview: `@docs/todos/03-auth-contact-capture.md`
-- Architecture: `@standards/architecture.md`
-- Coding/DB standards: `@standards/coding-standards.md`, `@standards/database-schema.md`
+- [docs/todos/03b-registration-signin.md](../docs/todos/03b-registration-signin.md)
+- [docs/prd/main.md](../docs/prd/main.md) §"Session 3"
+- [docs/data-model-invariants.md](../docs/data-model-invariants.md)
 
 ## History
 
-| Session | Focus                  | Key deliverables                                                                                                                                                                               |
-| ------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1       | Scaffold, i18n & Fonts | next-intl `/en`+`/uk` routing via `proxy.ts`; self-hosted Noto Serif (Cyrillic verified) + Inter; Tailwind v4 + shadcn/ui; `.env.example`. Code complete; deploy + provisioning pending owner. |
+| Session | Focus                   | Key deliverables                                                                                                                                                                                             |
+| ------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1       | Scaffold, i18n & Fonts  | next-intl `/en`+`/uk` routing via `proxy.ts`; self-hosted Noto Serif (Cyrillic verified) + Inter; Tailwind v4 + shadcn/ui; `.env.example`. Code complete; deploy + provisioning pending owner.               |
 | 2       | Data Model & Migrations | Prisma 7 + Neon schema; `prisma.config.ts` (datasource moved out of schema); client singleton via Neon adapter; initial migration `init` applied to Neon dev; invariants documented. Typecheck + lint clean. |
+| 3a      | Auth Foundation         | Auth.js v5 JWT credentials foundation, guards & first-admin bootstrap (merged via PR #1).                                                                                                                    |
+| 3b      | Registration, Sign-in & Contact Capture | Zod schemas (i18n-keyed) + server actions (`registerAction`/`signInAction`): bcrypt hash, non-enumerating responses, ≥1-contact-channel + `https://`-messenger rules, open-redirect-guarded `callbackUrl`. Localized `(auth)` route group → `/{locale}/signin` + `/register` (no `/auth/` segment); `EN`/`UK` `Auth` message catalogs; shadcn `Input`/`Label`. Typecheck + lint + build green; runtime register→sign-in e2e pending. |

@@ -21,8 +21,8 @@ export async function requireUser(callbackUrl?: string): Promise<AuthedUser> {
   const session = await auth();
   if (!session?.user) {
     const target = callbackUrl
-      ? `/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`
-      : "/auth/signin";
+      ? `/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`
+      : "/signin";
     redirect(target);
   }
   return { id: session.user.id, role: session.user.role };
