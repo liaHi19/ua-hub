@@ -37,15 +37,23 @@ export default async function SignInPage({
 
       <SignInForm callbackUrl={callbackUrl} />
 
-      <p className="text-center text-sm text-muted-foreground">
-        {t("signIn.noAccount")}{" "}
+      <div className="flex flex-col gap-2 text-center text-sm text-muted-foreground">
         <Link
-          href="/register"
+          href="/forgot-password"
           className="font-medium text-accent underline-offset-4 hover:underline"
         >
-          {t("register.title")}
+          {t("signIn.forgotPassword")}
         </Link>
-      </p>
+        <p>
+          {t("signIn.noAccount")}{" "}
+          <Link
+            href="/register"
+            className="font-medium text-accent underline-offset-4 hover:underline"
+          >
+            {t("register.title")}
+          </Link>
+        </p>
+      </div>
     </>
   );
 }

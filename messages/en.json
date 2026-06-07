@@ -38,7 +38,40 @@
       "subtitle": "Welcome back.",
       "submit": "Sign in",
       "submitting": "Signing in…",
-      "noAccount": "Don't have an account?"
+      "noAccount": "Don't have an account?",
+      "forgotPassword": "Forgot your password?"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "subtitle": "Enter your email and we'll send a reset link.",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "sent": "If an account exists for that email, a reset link has been sent. Please check your inbox.",
+      "backToSignIn": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "Choose a new password",
+      "subtitle": "Enter a new password for your account.",
+      "submit": "Update password",
+      "submitting": "Updating…",
+      "success": "Your password has been updated. You can now sign in.",
+      "goToSignIn": "Go to sign in",
+      "missingToken": "This reset link is invalid or has expired. Please request a new one."
+    },
+    "verify": {
+      "title": "Verify your email",
+      "subtitle": "Confirm your email address to finish setting up your account.",
+      "submit": "Verify my email",
+      "submitting": "Verifying…",
+      "success": "Your email has been verified. Thank you!",
+      "invalid": "This verification link is invalid or has expired.",
+      "goHome": "Go to homepage"
+    },
+    "email": {
+      "resetSubject": "Reset your UA Hub password",
+      "resetBody": "We received a request to reset your UA Hub password. Open this link to choose a new one:\n\n{url}\n\nThis link expires in 1 hour. If you didn't request this, you can safely ignore this email.",
+      "verifySubject": "Verify your UA Hub email",
+      "verifyBody": "Welcome to UA Hub! Open this link to verify your email address:\n\n{url}\n\nThis link expires in 24 hours."
     },
     "errors": {
       "emailRequired": "Email is required.",
@@ -52,6 +85,7 @@
       "messengerUrlInvalid": "Messenger link must start with https://",
       "registrationFailed": "We couldn't complete your registration. Please try again.",
       "invalidCredentials": "Invalid email or password.",
+      "resetTokenInvalid": "This reset link is invalid or has expired. Please request a new one.",
       "genericError": "Something went wrong. Please try again."
     }
   }
