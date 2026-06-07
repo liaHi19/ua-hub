@@ -6,9 +6,9 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 
 - **Sessions are logical units, not calendar slots.** Each session is a coherent, independently testable slice of work, ordered so that every session depends only on earlier ones.
 - **No fixed cadence.** Run the 13 sessions at whatever evening pace is realistic — the logical ordering holds regardless of calendar speed.
-- **Scope = scaffold → production deploy.** Seeding, quiet launch, and buffer follow the deploy session (see *Post-Deploy*); later phases are a roadmap pointer (Appendix A).
+- **Scope = scaffold → production deploy.** Seeding, quiet launch, and buffer follow the deploy session (see _Post-Deploy_); later phases are a roadmap pointer (Appendix A).
 - **Each session block uses a fixed template:** **Goal / Depends on / Scope / Acceptance / Risk.**
-- **i18n is cross-cutting.** The `next-intl` foundation (locale middleware, `/[locale]` routing, EN default) lands in Session 1; each public-surface session then translates its static strings and resolves content locale. There is no standalone i18n session.
+- **i18n is cross-cutting.** The `next-intl` foundation (locale proxy in `proxy.ts`, `/[locale]` routing, EN default) lands in Session 1; each public-surface session then translates its static strings and resolves content locale. There is no standalone i18n session.
 - **Key decisions baked into this plan:**
   - No custom domain at start; email + password auth.
   - User contact data captured at registration; owners self-serve their own events.
@@ -18,21 +18,21 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 
 ## Session map
 
-| #  | Session | Goal | Depends on |
-| -- | ------- | ---- | ---------- |
-| 1  | Project Scaffold, i18n & Fonts | App boots + placeholder deploy on the Vercel default URL; next-intl + Noto Serif wired; accounts provisioned | — |
-| 2  | Data Model & Migrations | Full Phase-1 Prisma schema migrated to Neon | 1 |
-| 3  | Authentication (Email + Password) + Contact Capture | Register + password sign-in (JWT); verification/reset built, email deferred | 1, 2 |
-| 4  | Postcode & City Resolution | Postcode → `{city, region, lat, lng}` with tests | 1 |
-| 5  | Organization Admin CRUD | Admin manages orgs + verification | 2, 3 |
-| 6  | Submit Form & Image Upload (+ Owner Edit-While-Pending) | User submits a PENDING event (incl. opt-in public contact); owner edits it while pending | 2, 3, 4, 5 |
-| 7  | Admin Moderation Queue | Admin approve/reject/edit/cancel/soft-delete; sees submitter contact | 5, 6 |
-| 8  | Owner Event Management & Notifications | `/my/events` + two-way in-app/email notifications | 2, 3, 6, 7 |
-| 9  | User Account & Admin Contact | Profile edit, account self-delete (events kept), admin delete-user, contact-the-admin | 2, 3, 6, 7, 8 |
-| 10 | Public Filterable List (`/`) | URL-stateful filterable list of approved events; translated chrome + UK-first content | 2, 7 |
-| 11 | Event Detail & Org Pages + Metadata | Detail + org pages + opt-in public contact + language-aware content/metadata; no PII leak | 2, 10 |
-| 12 | OG Card (Critical Path) | Designed share card verified across five clients | 11 |
-| 13 | Observability, Cron, Legal Pages & Production Deploy | Live, monitored; email enabled when the domain is live | all |
+| #   | Session                                                 | Goal                                                                                                         | Depends on    |
+| --- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------- |
+| 1   | Project Scaffold, i18n & Fonts                          | App boots + placeholder deploy on the Vercel default URL; next-intl + Noto Serif wired; accounts provisioned | —             |
+| 2   | Data Model & Migrations                                 | Full Phase-1 Prisma schema migrated to Neon                                                                  | 1             |
+| 3   | Authentication (Email + Password) + Contact Capture     | Register + password sign-in (JWT); verification/reset built, email deferred                                  | 1, 2          |
+| 4   | Postcode & City Resolution                              | Postcode → `{city, region, lat, lng}` with tests                                                             | 1             |
+| 5   | Organization Admin CRUD                                 | Admin manages orgs + verification                                                                            | 2, 3          |
+| 6   | Submit Form & Image Upload (+ Owner Edit-While-Pending) | User submits a PENDING event (incl. opt-in public contact); owner edits it while pending                     | 2, 3, 4, 5    |
+| 7   | Admin Moderation Queue                                  | Admin approve/reject/edit/cancel/soft-delete; sees submitter contact                                         | 5, 6          |
+| 8   | Owner Event Management & Notifications                  | `/my/events` + two-way in-app/email notifications                                                            | 2, 3, 6, 7    |
+| 9   | User Account & Admin Contact                            | Profile edit, account self-delete (events kept), admin delete-user, contact-the-admin                        | 2, 3, 6, 7, 8 |
+| 10  | Public Filterable List (`/`)                            | URL-stateful filterable list of approved events; translated chrome + UK-first content                        | 2, 7          |
+| 11  | Event Detail & Org Pages + Metadata                     | Detail + org pages + opt-in public contact + language-aware content/metadata; no PII leak                    | 2, 10         |
+| 12  | OG Card (Critical Path)                                 | Designed share card verified across five clients                                                             | 11            |
+| 13  | Observability, Cron, Legal Pages & Production Deploy    | Live, monitored; email enabled when the domain is live                                                       | all           |
 
 ---
 
@@ -47,14 +47,16 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** none.
 
 **Scope**
+
 - `create-next-app` (Next.js 16 App Router + TypeScript); Tailwind + shadcn/ui; base layout (`app/`, `lib/`, `components/`).
-- **next-intl** — locale middleware + `/[locale]` routing (`/en` default, `/uk`) and EN/UK message-catalog scaffolding (grown per surface).
+- **next-intl** — locale proxy (`proxy.ts`) + `/[locale]` routing (`/en` default, `/uk`) and EN/UK message-catalog scaffolding (grown per surface).
 - **Self-host Noto Serif** (Cyrillic + Latin, SIL OFL) in `/public/fonts/`.
 - `git init` + `.gitignore`.
 - Provision Vercel, Neon, Resend, Vercel Blob; `.env.local` + Vercel env scaffolding; accept Blob region `iad1`.
 - **No custom domain yet** — deploy to `*.vercel.app`; no Resend DNS verification (picked up in Session 13).
 
 **Acceptance**
+
 - `pnpm dev` serves a page.
 - `/` redirects to `/en`; `/uk` serves Ukrainian chrome.
 - Noto Serif renders Cyrillic.
@@ -69,6 +71,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** 1.
 
 **Scope**
+
 - Prisma + Neon.
 - **Enums:** `Role` / `EventType` / `Status` (single definition — drop the duplicate `Status`) + `NotificationType`.
 - **Models:**
@@ -82,6 +85,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 - Document invariants as code comments; migration discipline (no destructive migrations in month 1).
 
 **Acceptance**
+
 - Migration applies to Neon.
 - Prisma client generates.
 - Invariants written down.
@@ -96,14 +100,16 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** 1, 2.
 
 **Scope**
+
 - Auth.js v5 **Credentials provider** + **JWT** session strategy.
 - **Routes:** `/auth/register` (hash via bcrypt/argon2), `/auth/signin`, `/auth/forgot-password`, `/auth/reset-password`, `/auth/verify`.
 - CSRF on state-changing routes; **no bearer path**; no account enumeration.
 - Role gating helper (`USER`/`ADMIN`); bootstrap the first admin.
-- **Email flows deferred:** verification + reset implemented but sending/enforcement gated off until Session 13 (no domain/sender yet); password login works without email.
+- **Email flows deferred:** verification + reset implemented but sending/enforcement gated off until Session 13 (no domain/sender yet)
 - **Registration captures contact:** first name + surname (required) plus phone and/or messenger link (≥1 contact channel required; `messengerUrl` scheme-validated), so the admin can verify/contact submitters. Contact data is admin-only.
 
 **Acceptance**
+
 - Register → password sign-in works end-to-end.
 - Passwords hashed (never plaintext); JWT session persists.
 - Protected route rejects anonymous.
@@ -120,12 +126,14 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** 1.
 
 **Scope**
+
 - `/api/postcode/[code]` edge proxy to postcodes.io; `Cache-Control: public, s-maxage=2592000`; 3s timeout.
 - `lib/normalize-postcode.ts` (`BS16QT` → `BS1 6QT`).
 - `lib/resolve-city.ts` (`admin_district` → canonical city; London boroughs → "London", Greater Manchester → "Manchester").
 - **Tests:** unit tests for `normalizePostcode` (~10 cases) + city-resolver fixtures (Bristol / London N1 / Manchester / Glasgow).
 
 **Acceptance**
+
 - Proxy returns cached city/region/lat-lng.
 - Failed lookup → clear error (no free-text fallback).
 - Postcode + city-resolver tests green.
@@ -139,11 +147,13 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** 2, 3.
 
 **Scope**
+
 - `/admin/orgs` — create (`slug` / `nameEn` / optional `nameUk` / `website` / `logoUrl` / `isVerified`); list; soft-delete.
 - `/admin/orgs/[id]` — edit + verification toggle.
 - Admin-only guard reusing Session 3 gating.
 
 **Acceptance**
+
 - Admin manages org rows.
 - Non-admin blocked.
 - `isVerified` is display-only (no auto-approve logic).
@@ -155,6 +165,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** 2, 3, 4, 5.
 
 **Scope**
+
 - `/submit` (auth-gated).
 - Searchable Organization dropdown (pick existing **or** leave blank + `organizerName`).
 - Debounced (400ms) postcode lookup with read-only city/region.
@@ -168,6 +179,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 - **Owner edit:** `/events/[id]/edit` reuses the form, guarded to `createdById == current user && status == PENDING` (after approval → admin-only).
 
 **Acceptance**
+
 - Submit yields a `PENDING` event.
 - Bad postcode blocks submission.
 - Invalid `externalUrl` scheme rejected; tracking params stripped.
@@ -186,6 +198,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** 5, 6.
 
 **Scope**
+
 - `/admin` pending queue; approve/reject POST routes (set `approvedAt`); attach-to-org dropdown at approval.
 - `/admin/events/[id]/edit` — reschedule, typo fix, cancel (`cancelledAt` + `cancellationNote`), soft-delete (`deletedAt`).
 - `/admin/venues/new` escape hatch (BFPO, `GIR 0AA`, brand-new postcodes).
@@ -194,6 +207,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 - Admin actions emit owner notifications via the Session 8 layer.
 
 **Acceptance**
+
 - Approve → `APPROVED` + public; reject hides it.
 - Cancel shows a "Cancelled" badge while staying listed.
 - Soft-delete removes it from public surfaces.
@@ -207,6 +221,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** 2 (Notification + lifecycle schema), 3 (auth/user), 6 (owner actions), 7 (admin actions).
 
 **Scope**
+
 - `/my/events` dashboard — the signed-in user's events with status, edit-if-pending, **cancel**, **delete** actions.
 - Owner cancel (`cancelledAt`) + soft-delete (`deletedAt`) endpoints scoped to own events.
 - **Notification layer** — create `Notification` rows on:
@@ -217,6 +232,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 - `emailNotificationsEnabled` flag respected (default on); user-facing settings toggle UI deferred to a later phase.
 
 **Acceptance**
+
 - Owner can cancel/delete only their own events.
 - Cancel/delete of an APPROVED event creates an admin notification.
 - Each admin action on an event creates an owner notification.
@@ -233,6 +249,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** 2 (`User.deletedAt` + `ContactMessage` schema), 3 (auth/user), 6 (events exist — to prove retention), 7 (admin area), 8 (admin-alert pattern).
 
 **Scope**
+
 - **`/profile`** — view + edit own info (`firstName`, `lastName`, `phone`, `messengerUrl`; an email change re-triggers verification once enforcement is live).
   - **Delete-account** → `DELETE /api/account` performs **soft-delete + anonymize**: clear `passwordHash`, scrub `email` to a non-identifying placeholder (frees it for re-registration), clear names / `phone` / `messengerUrl` / `contactVerifiedAt`, set `deletedAt`, invalidate sessions. The user's `Event` rows are **retained** (the `createdBy` link is preserved, pointing at the anonymized tombstone).
 - **`/admin/users`** — admin lists users, views contact, and **deletes any user** (`DELETE /api/admin/users/[id]`, same soft-delete + anonymize path, events retained).
@@ -240,6 +257,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 - **`/admin/messages`** — admin inbox for `ContactMessage`s with an unread count (`readAt`); admin alerted in-app immediately; email-to-admin deferred until the domain is live.
 
 **Acceptance**
+
 - A user edits their own profile but not another's.
 - Deleting one's own account anonymizes the user, blocks further login, and **leaves their events intact** (PENDING stay reviewable, APPROVED stay public).
 - The admin can delete any user with the same retention guarantee.
@@ -255,16 +273,18 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** 2, 7 (needs approved events to render meaningfully).
 
 **Scope**
+
 - `/` lists `APPROVED`, non-deleted events sorted `startsAt` asc.
 - City chips (active cities + "All UK").
 - Date chips ("This week" = today+6d rolling, "This month" = today+30d, "All upcoming") via `lib/date-ranges.ts`.
 - Format chips (All / In person / Online); default view "Everything".
 - URL state `?city=&when=&format=` (preserved across the `/en` & `/uk` locale prefixes).
-- City slug normalization (kebab-case) in middleware with separate display labels.
+- City slug normalization (kebab-case) in `proxy.ts` with separate display labels.
 - **Translated chrome** (next-intl) + **content-locale resolution** via `lib/pick-locale-field.ts` (UK-first with per-field English fallback).
 - Empty states; exclude past + soft-deleted by default.
 
 **Acceptance**
+
 - Each filter narrows results correctly.
 - Online events appear only under "Online", never a city chip.
 - Soft-deleted/non-approved/past excluded.
@@ -278,6 +298,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** 2, 10.
 
 **Scope**
+
 - `/events/[id]` server component with server-side `where: { status: 'APPROVED', deletedAt: null }`; 404 on missing/non-approved/deleted.
 - "Event has passed" badge for past events (no 404); "Cancelled" badge.
 - Title + description via content-locale resolution (`lib/pick-locale-field.ts`: UK-first, per-field English fallback); plain text `\n` → `<br>` only.
@@ -289,6 +310,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 - Telegram-share button (city in URL); cuid URLs canonical (no slugs); APPROVED-only filter test.
 
 **Acceptance**
+
 - Non-approved/missing/deleted 404s; past event shows badge not 404.
 - Description renders no HTML/markdown.
 - `/uk` shows UK-first content with per-field English fallback; `/en` shows English.
@@ -304,6 +326,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** 11 (metadata wiring + approved-only access).
 
 **Scope**
+
 - `/api/og/[id]` implementing the card spec (1200×630, cream `#FFF8EC`, navy `#1B2A41`, terracotta/gold accent, type glyph, date block, bilingual stacking with UK-on-top when `titleUk` present, inline 📅/📍, footer strip, "Cancelled" badge).
 - **Noto Serif (Cyrillic + Latin, SIL OFL) self-hosted in `/public/fonts/`, inlined in the handler** (no edge Google Fonts fetch) — verify Ukrainian rendering.
 - Cache `public, max-age=86400, s-maxage=604800`.
@@ -311,6 +334,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 - Cross-client matrix (iOS / Android / desktop Telegram, WhatsApp, Signal) with screenshots.
 
 **Acceptance**
+
 - Card renders correct bilingual layout.
 - Cyrillic displays correctly.
 - OG snapshot test green (non-negotiable).
@@ -325,6 +349,7 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 **Depends on:** all prior sessions.
 
 **Scope**
+
 - Vercel Analytics (cross-city click-through is the wedge metric).
 - Nightly Vercel Cron admin email when pending > 0; nightly cron to reset the rate-limit counter.
 - Code of Conduct page with explicit image-content policy (translated EN/UK).
@@ -337,12 +362,13 @@ A moderated cross-city directory of Ukrainian community events in the UK, built 
 - Final production deploy.
 
 **Acceptance**
+
 - Production site live (on the custom domain if acquired, otherwise the Vercel default URL — fully functional either way).
 - Analytics receiving data.
 - A forced "pending > 0" state triggers the nightly email.
 - Code of Conduct page reachable.
 - Build runs `migrate deploy` (never `db push`).
-- *Note:* once the domain is verified, Resend sends verification/reset/notification/contact email to external users; until then those emails are limited to the owner's inbox via the test sender; in-app notifications and the contact inbox work throughout.
+- _Note:_ once the domain is verified, Resend sends verification/reset/notification/contact email to external users; until then those emails are limited to the owner's inbox via the test sender; in-app notifications and the contact inbox work throughout.
 
 ---
 

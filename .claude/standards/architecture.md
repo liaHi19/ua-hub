@@ -64,7 +64,8 @@ src/
 │   └── users/
 ├── lib/                 # pure utilities — no feature imports
 ├── messages/            # next-intl catalogs (en, uk)
-└── prisma/              # schema + client
+├── prisma/              # schema + client
+└── proxy.ts             # Next.js 16 proxy (replaces middleware.ts) — next-intl locale routing
 ```
 
 **Boundary rules:** `app/` orchestrates `features/`; features never import from `app/`. A feature touches another only through its public service, never its tables. `lib/` is pure (`clean-url`, `resolve-city`, `date-ranges`, `pick-locale-field`, `normalizePostcode`). Prisma is the single database gateway, and each table has exactly one owning module.
@@ -119,7 +120,7 @@ Within the Node runtime, a request passes through four logical layers. Authoriza
 ```mermaid
 graph TD
     P["Presentation<br/>pages · admin · forms · org pages"]
-    A["API layer<br/>REST · auth middleware · validation"]
+    A["API layer<br/>REST · auth checks · validation"]
     S["Application services<br/>events · venues · orgs · moderation<br/>notifications · users · auth"]
     D["Data access — Prisma"]
     DB["Neon Postgres"]
