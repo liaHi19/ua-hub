@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Generated Prisma client (not authored by us).
     "src/generated/**",
+    // Local gstack browser-tooling state (gitignored, not readable on Windows).
+    ".gstack/**",
   ]),
 ]);
 
