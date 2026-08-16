@@ -5,7 +5,8 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { routing } from "@/i18n/routing";
-import { inter, notoSerif } from "@/lib/fonts";
+import { notoSerif } from "@/lib/fonts";
+import { SiteHeader } from "@/components/layout/SiteHeader";
 import "../globals.css";
 
 export function generateStaticParams() {
@@ -40,9 +41,12 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   return (
-    <html lang={locale} className={`${inter.variable} ${notoSerif.variable}`}>
-      <body className="min-h-dvh antialiased">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+    <html lang={locale} className={notoSerif.variable}>
+      <body className="flex min-h-dvh flex-col antialiased">
+        <NextIntlClientProvider>
+          <SiteHeader />
+          <div className="flex flex-1 flex-col">{children}</div>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

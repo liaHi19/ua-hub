@@ -1,101 +1,224 @@
 @import "tailwindcss";
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
+/* ============================================================
+   UA Hub — Design Tokens
+   Kalyna red · warm charcoal · gold.  No blue.
+   ------------------------------------------------------------
+   COLOUR is themed: apply .theme-paper (light) or .theme-night
+   (dark) to a wrapper element. :root defaults to Paper, and
+   follows the OS via prefers-color-scheme when no class is set.
 
-  /* Brand palette (shared with the OG card spec) */
-  --color-brand-cream: var(--brand-cream);
-  --color-brand-navy: var(--brand-navy);
-  --color-brand-terracotta: var(--brand-terracotta);
-
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-noto-serif);
-
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-}
+   oklch() is the source of truth; the HEX in each comment is the
+   sRGB equivalent for tools that don't speak oklch.
+   ============================================================ */
 
 :root {
-  --radius: 0.625rem;
+  /* ---- Type ---- */
+  --font: "Noto Serif", Georgia, "Times New Roman", serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 
-  --brand-cream: #fff8ec;
-  --brand-navy: #1b2a41;
-  --brand-terracotta: #c46a4a;
+  --t-display: 34px;
+  --t-h1:      27px;
+  --t-h2:      21px;
+  --t-h3:      17px;
+  --t-body:    16px;
+  --t-small:   14px;
+  --t-label: 12.5px;
 
-  --background: #ffffff;
-  --foreground: #1b2a41;
-  --card: #ffffff;
-  --card-foreground: #1b2a41;
-  --popover: #ffffff;
-  --popover-foreground: #1b2a41;
-  --primary: #1b2a41;
-  --primary-foreground: #fff8ec;
-  --secondary: #f4f1ea;
-  --secondary-foreground: #1b2a41;
-  --muted: #f4f1ea;
-  --muted-foreground: #5b6472;
-  --accent: #c46a4a;
-  --accent-foreground: #fff8ec;
-  --destructive: #b3261e;
-  --destructive-foreground: #ffffff;
-  --border: #e5e1d8;
-  --input: #e5e1d8;
-  --ring: #c46a4a;
+  /* ---- Shape ---- */
+  --r:    2px;
+  --r-lg: 3px;
+
+  /* ---- Spacing · 4-base ---- */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+
+  /* ---- Elevation (Paper defaults; Night overrides below) ---- */
+  --shadow-1: 0 1px 2px rgba(40,24,16,.06), 0 1px 3px rgba(40,24,16,.05);
+  --shadow-2: 0 2px 4px rgba(40,24,16,.06), 0 10px 28px rgba(40,24,16,.09);
+
+  /* ---- Colour defaults (Paper/light) ---- */
+  --bg:           oklch(0.971 0.013 73);   /* #FBF4EC  warm cream page      */
+  --surface:      oklch(0.995 0.006 75);   /* #FFFDF9  cards, bars          */
+  --surface-2:    oklch(0.950 0.016 68);   /* #F6EDE3  sunken / hover       */
+  --ink:          oklch(0.225 0.014 42);   /* #221A17  headings             */
+  --ink-2:        oklch(0.320 0.016 42);   /* #3A302D  body text            */
+  --muted:        oklch(0.505 0.020 48);   /* #6F615B  secondary, icons     */
+  --line:         oklch(0.885 0.018 60);   /* #E2D7CE  hairlines            */
+  --line-strong:  oklch(0.795 0.024 54);   /* #C9B8AE  control borders      */
+
+  --brand:        oklch(0.520 0.170 27);   /* #B6322D  kalyna red — primary */
+  --brand-strong: oklch(0.435 0.165 27);   /* #971316  hover / pressed      */
+  --brand-tint:   oklch(0.940 0.042 30);   /* #FFE1DB  red wash             */
+  --brand-ink:    oklch(0.992 0.008 75);   /* #FFFCF7  text on red          */
+
+  --accent:        oklch(0.805 0.135 80);  /* #EDB54D  gold                 */
+  --accent-strong: oklch(0.665 0.130 70);  /* #C68427  gold text/hover (AA) */
+  --accent-soft:   oklch(0.950 0.046 82);  /* #FEECCC  gold wash            */
+
+  --btn-bg: var(--brand);  --btn-bg2: var(--brand-strong);  --btn-ink: var(--brand-ink);
+  --inperson: var(--brand);    --inperson-bg: var(--brand-tint);
+  --online:   var(--accent-strong); --online-bg: var(--accent-soft);
+  --focus: var(--brand);
+  --motif: var(--brand);  --motif-2: var(--accent);  --motif-op: 1;
 }
 
-.dark {
-  --background: #14141a;
-  --foreground: #ededed;
-  --card: #1b1b22;
-  --card-foreground: #ededed;
-  --popover: #1b1b22;
-  --popover-foreground: #ededed;
-  --primary: #fff8ec;
-  --primary-foreground: #1b2a41;
-  --secondary: #262630;
-  --secondary-foreground: #ededed;
-  --muted: #262630;
-  --muted-foreground: #a1a1aa;
-  --accent: #c46a4a;
-  --accent-foreground: #fff8ec;
-  --destructive: #e5484d;
-  --destructive-foreground: #ffffff;
-  --border: #2c2c36;
-  --input: #2c2c36;
-  --ring: #c46a4a;
+/* ============================================================
+   THEME · PAPER (light)
+   ============================================================ */
+.theme-paper {
+  --bg:           oklch(0.971 0.013 73);
+  --surface:      oklch(0.995 0.006 75);
+  --surface-2:    oklch(0.950 0.016 68);
+  --ink:          oklch(0.225 0.014 42);
+  --ink-2:        oklch(0.320 0.016 42);
+  --muted:        oklch(0.505 0.020 48);
+  --line:         oklch(0.885 0.018 60);
+  --line-strong:  oklch(0.795 0.024 54);
+  --brand:        oklch(0.520 0.170 27);
+  --brand-strong: oklch(0.435 0.165 27);
+  --brand-tint:   oklch(0.940 0.042 30);
+  --brand-ink:    oklch(0.992 0.008 75);
+  --accent:        oklch(0.805 0.135 80);
+  --accent-strong: oklch(0.665 0.130 70);
+  --accent-soft:   oklch(0.950 0.046 82);
+  --btn-bg: var(--brand);  --btn-bg2: var(--brand-strong);  --btn-ink: var(--brand-ink);
+  --inperson: var(--brand);    --inperson-bg: var(--brand-tint);
+  --online:   var(--accent-strong); --online-bg: var(--accent-soft);
+  --focus: var(--brand);
+  --motif: var(--brand);  --motif-2: var(--accent);  --motif-op: 1;
+  --shadow-1: 0 1px 2px rgba(40,24,16,.06), 0 1px 3px rgba(40,24,16,.05);
+  --shadow-2: 0 2px 4px rgba(40,24,16,.06), 0 10px 28px rgba(40,24,16,.09);
+}
+
+/* ============================================================
+   THEME · NIGHT (dark)
+   ============================================================ */
+.theme-night {
+  --bg:           oklch(0.178 0.010 44);   /* #15100E  warm black page      */
+  --surface:      oklch(0.218 0.012 46);   /* #1F1816  cards, bars          */
+  --surface-2:    oklch(0.262 0.014 46);   /* #2B231F  raised / hover       */
+  --ink:          oklch(0.962 0.012 76);   /* #F7F2EA  primary text (cream) */
+  --ink-2:        oklch(0.880 0.014 74);   /* #DDD6CE  body text            */
+  --muted:        oklch(0.660 0.016 70);   /* #999188  secondary, icons     */
+  --line:         oklch(0.330 0.014 50);   /* #3C332F  hairlines            */
+  --line-strong:  oklch(0.430 0.016 50);   /* #574D48  control borders      */
+  --brand:        oklch(0.620 0.165 28);   /* #D7564A  kalyna red (brighter)*/
+  --brand-strong: oklch(0.555 0.175 28);   /* #C53C33  hover / pressed      */
+  --brand-tint:   oklch(0.305 0.055 30);   /* #47241E  deep red wash        */
+  --brand-ink:    oklch(0.985 0.008 76);   /* #FDF9F4  text on red          */
+  --accent:        oklch(0.815 0.135 82);  /* #EEB950  gold                 */
+  --accent-strong: oklch(0.735 0.135 78);  /* #D79D34  gold hover           */
+  --accent-soft:   oklch(0.320 0.050 72);  /* #432E14  deep gold wash       */
+  --btn-bg: var(--brand);  --btn-bg2: var(--brand-strong);  --btn-ink: var(--brand-ink);
+  --inperson: var(--brand);  --inperson-bg: var(--brand-tint);
+  --online:   var(--accent); --online-bg: var(--accent-soft);
+  --focus: var(--accent);
+  --motif: var(--brand);  --motif-2: var(--accent);  --motif-op: 1;
+  --shadow-1: 0 1px 2px rgba(0,0,0,.30), 0 1px 3px rgba(0,0,0,.25);
+  --shadow-2: 0 2px 6px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.45);
+}
+
+/* OS dark mode auto-switch when no explicit theme class is set */
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-paper):not(.theme-night) {
+    --bg:           oklch(0.178 0.010 44);
+    --surface:      oklch(0.218 0.012 46);
+    --surface-2:    oklch(0.262 0.014 46);
+    --ink:          oklch(0.962 0.012 76);
+    --ink-2:        oklch(0.880 0.014 74);
+    --muted:        oklch(0.660 0.016 70);
+    --line:         oklch(0.330 0.014 50);
+    --line-strong:  oklch(0.430 0.016 50);
+    --brand:        oklch(0.620 0.165 28);
+    --brand-strong: oklch(0.555 0.175 28);
+    --brand-tint:   oklch(0.305 0.055 30);
+    --brand-ink:    oklch(0.985 0.008 76);
+    --accent:        oklch(0.815 0.135 82);
+    --accent-strong: oklch(0.735 0.135 78);
+    --accent-soft:   oklch(0.320 0.050 72);
+    --online:   var(--accent); --online-bg: var(--accent-soft);
+    --focus: var(--accent);
+    --shadow-1: 0 1px 2px rgba(0,0,0,.30), 0 1px 3px rgba(0,0,0,.25);
+    --shadow-2: 0 2px 6px rgba(0,0,0,.35), 0 12px 32px rgba(0,0,0,.45);
+  }
+}
+
+/* ============================================================
+   Tailwind v4 theme bridge
+   Maps design tokens → Tailwind utility classes
+   ============================================================ */
+@theme inline {
+  /* Surfaces */
+  --color-background:         var(--bg);
+  --color-foreground:         var(--ink);
+  --color-card:               var(--surface);
+  --color-card-foreground:    var(--ink);
+  --color-popover:            var(--surface);
+  --color-popover-foreground: var(--ink);
+
+  /* Primary = brand (kalyna red) */
+  --color-primary:            var(--brand);
+  --color-primary-foreground: var(--brand-ink);
+
+  /* Secondary = sunken surface */
+  --color-secondary:            var(--surface-2);
+  --color-secondary-foreground: var(--ink-2);
+
+  /* Muted */
+  --color-muted:            var(--surface-2);
+  --color-muted-foreground: var(--muted);
+
+  /* Accent = gold */
+  --color-accent:            var(--accent-soft);
+  --color-accent-foreground: var(--accent-strong);
+
+  /* Destructive = brand red */
+  --color-destructive:            var(--brand);
+  --color-destructive-foreground: var(--brand-ink);
+
+  /* Lines / controls */
+  --color-border: var(--line);
+  --color-input:  var(--line-strong);
+  --color-ring:   var(--focus);
+
+  /* Typography — one family carries the whole UI, Latin + Cyrillic */
+  --font-sans:  var(--font-noto-serif);
+  --font-serif: var(--font-noto-serif);
+
+  /* Radius */
+  --radius-sm: var(--r);
+  --radius-md: var(--r);
+  --radius-lg: var(--r-lg);
 }
 
 @layer base {
   * {
-    border-color: var(--border);
+    border-color: var(--line);
   }
   body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-sans), system-ui, sans-serif;
+    background-color: var(--bg);
+    color: var(--ink-2);
+    font-family: var(--font-sans), Georgia, serif;
   }
   h1,
   h2,
   h3 {
+    color: var(--ink);
     font-family: var(--font-serif), Georgia, serif;
   }
+}
+
+/* ============================================================
+   Folk motif — cross-stitch divider (see design system's `.vysh`)
+   ============================================================ */
+:root {
+  --vysh-svg: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cg fill='%23000'%3E%3Crect x='7' y='1' width='2' height='2'/%3E%3Crect x='5' y='3' width='2' height='2'/%3E%3Crect x='9' y='3' width='2' height='2'/%3E%3Crect x='3' y='5' width='2' height='2'/%3E%3Crect x='11' y='5' width='2' height='2'/%3E%3Crect x='1' y='7' width='2' height='2'/%3E%3Crect x='13' y='7' width='2' height='2'/%3E%3Crect x='3' y='9' width='2' height='2'/%3E%3Crect x='11' y='9' width='2' height='2'/%3E%3Crect x='5' y='11' width='2' height='2'/%3E%3Crect x='9' y='11' width='2' height='2'/%3E%3Crect x='7' y='13' width='2' height='2'/%3E%3C/g%3E%3C/svg%3E");
+}
+.vysh-divider {
+  height: 10px;
+  width: 64px;
+  background-color: var(--brand);
+  -webkit-mask: var(--vysh-svg) repeat-x left center / auto 10px;
+  mask: var(--vysh-svg) repeat-x left center / auto 10px;
 }

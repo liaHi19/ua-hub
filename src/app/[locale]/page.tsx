@@ -14,10 +14,11 @@ export default async function HomePage({
   const t = await getTranslations("Home");
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-3xl flex-col items-center justify-center gap-8 px-6 text-center">
-      <h1 className="font-serif text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+    <main className="mx-auto flex flex-1 max-w-3xl flex-col items-center justify-center gap-8 px-6 text-center">
+      <h1 className="font-serif text-5xl font-semibold tracking-tight text-foreground sm:text-6xl">
         {t("heading")}
       </h1>
+      <div className="vysh-divider" aria-hidden="true" />
       <p className="max-w-xl text-lg text-muted-foreground">{t("subheading")}</p>
       <Link href="/submit" className={buttonVariants({ size: "lg" })}>
         {t("cta")}
