@@ -1,4 +1,4 @@
-# Current Feature: Session 3b — Registration, Sign-in & Contact Capture
+# Current Feature: Session 3c — Email Verification & Password Reset (Deferred)
 
 ## Status
 
@@ -6,79 +6,82 @@ In Progress
 
 ## Goals
 
-- The credentials loop: a user registers (capturing admin-only contact data) and signs in via localized pages; register → sign-in works end-to-end.
-- Responses never leak whether an email already exists (non-enumerating).
-- Passwords hashed (never plaintext); JWT session persists across requests.
-- Registration blocked without first name + surname + ≥1 contact channel (phone or `https://` messenger URL).
-- `/uk/{signin,register}` renders Ukrainian chrome; `/en/{signin,register}` renders English.
+- Verification + password-reset flows are fully **built** and run end-to-end in dev.
+- All external email sending sits behind `AUTH_EMAIL_ENABLED` (off) — **no external mail sent** pre-domain (domain goes live in Session 13).
+- `PasswordResetToken`: random token, **stored hashed at rest**, short expiry (~1h), **single-use** (deleted on consume); reset re-hashes with `bcryptjs`.
+- `EmailVerificationToken`: sets `User.emailVerified` on confirm; longer expiry (~24h), single-use.
+- `forgot-password` is **non-enumerating** — same generic "if an account exists, a reset link was sent" regardless of whether the email exists.
+- Sign-in is **not** blocked on an unverified email (enforcement deferred to Session 13).
+- Pages localized under `[locale]`; `/uk` vs `/en` chrome verified.
 
 ## Notes
 
-Source: [docs/todos/03b-registration-signin.md](../docs/todos/03b-registration-signin.md); parent [Session 3 overview](../docs/todos/03-auth-contact-capture.md). **Depends on:** 03a (auth foundation — engine, guards, session), already merged.
+Source: [docs/todos/03c-verification-reset.md](../docs/todos/03c-verification-reset.md); parent [Session 3 overview](../docs/todos/03-auth-contact-capture.md). **Depends on:** [03a](../docs/todos/03a-auth-foundation.md) (engine), [03b](../docs/todos/03b-registration-signin.md) (users exist to verify / reset) — both merged.
 
-### 1. Registration + contact capture — `/register`
+**Password login stays the working path.** This session builds verify + reset but keeps them dormant behind the deferral gate.
 
-- Zod schema (`src/features/users/`): `email` (format), `password` (min length + basic strength), `firstName` **required**, `lastName` **required**, `phone?`, `messengerUrl?`; refine enforcing **≥1 of `{phone, messengerUrl}`** and `messengerUrl` **`https://` only**.
-- Server action: hash password (`bcryptjs`), create `User` (`role: USER`, `emailVerified: null`), return `{ success, data, error }` shape (coding standard).
-- **Non-enumerating response** — never reveal whether an email already exists.
-- On success: establish session (`signIn("credentials", …)`) or redirect to `/signin`.
-- Contact data (`firstName`/`lastName`/`phone`/`messengerUrl`) is **admin-only — never rendered publicly**; add UI note "for admin verification, not shown publicly".
+### 0. Workflow wrapper
 
-### 2. Sign-in — `/signin`
+- Branch `feature/session-3c-verify-reset`; update [context/current-feature.md](../context/current-feature.md); `pnpm typecheck` / `lint` / `build` green before commit; no AI attribution.
 
-- Credentials form → `signIn`; on failure show **generic "invalid email or password"**; on success redirect to `callbackUrl` or `/`.
-- CSRF: Auth.js covers its own POST routes; Server Actions are origin-checked by the framework; cookie JWT only (no bearer path).
+### 1. Password reset — `/auth/forgot-password` + `/auth/reset-password`
 
-### 3. Localized pages + i18n
+- Issue/consume `PasswordResetToken`: random token, **store hashed at rest**, short expiry (~1h), **single-use** (delete on consume); reset re-hashes the password with `bcryptjs`.
+- `forgot-password` always returns the same generic "if an account exists, a reset link was sent" message — regardless of whether the email exists (no enumeration).
 
-- Pages in the `(auth)` route group at `src/app/[locale]/(auth)/{signin,register}` → `/en/signin`, `/uk/register` (group folder is URL-invisible, so **no `/auth/` segment**); forms in `src/components/auth/`.
-- Auth.js `pages: { signIn: "/signin" }`; keep post-auth redirects locale-aware via i18n navigation helpers.
-- Add EN/UK keys for auth chrome + validation/error messages to `messages/en.json` + `uk.json`.
+### 2. Email verification — `/auth/verify`
+
+- Issue/consume `EmailVerificationToken`: set `User.emailVerified` on confirm; longer expiry (~24h), single-use.
+
+### 3. Deferral gate
+
+- Wrap the **send step** in `AUTH_EMAIL_ENABLED` (off → no external mail; dev: log the link / no-op). Reuse this exact gate in Sessions 8 & 13.
+- **No enforcement yet** — do **not** block unverified users from signing in. Never silently mark all emails verified in production.
+
+### 4. i18n
+
+- Add EN/UK keys for the verify / forgot-password / reset-password pages + messages to [messages/en.json](../messages/en.json) + `uk.json`; verify `/uk` vs `/en`.
 
 ### Out of scope
 
-- Verification / reset token flows → 03c. Profile edit / account delete → Session 9.
-
-### Gotchas
-
-- `messengerUrl` is `https://`-only; `lib/clean-url.ts` is a Session 6 deliverable → add a minimal check now (Zod refine or tiny `lib/validate-url.ts`).
-- Fully masking "email already exists" depends on verify email (Session 13); pre-domain keep generic copy + note the limitation.
-- Locale-prefixed auth pages must agree with Auth.js `pages` config + the next-intl proxy (`proxy.ts`) — test `/uk/signin` explicitly.
+- Actual email send + verification enforcement → Session 13 (flip `AUTH_EMAIL_ENABLED` on with the verified-domain sender).
 
 ## Decisions
 
-- **Zod messages as i18n keys.** Schemas in [src/features/users/schemas.ts](../src/features/users/schemas.ts) emit stable keys (e.g. `passwordWeak`); server actions translate them via `getTranslations("Auth.errors")` so EN/UK validation copy lives in the catalogs, not in code.
-- **Session established on register.** `registerAction` calls `signIn("credentials", { redirectTo: "/${locale}" })` after `user.create`, so register → signed-in is one step (satisfies the end-to-end goal). On `AuthError` it falls back to a generic message.
-- **Non-enumeration.** Any `user.create` failure (incl. P2002 email collision) returns one generic `registrationFailed` message; sign-in failures return one generic `invalidCredentials`. Full duplicate-masking deferred to Session 13 (email verify) — noted in code.
-- **`https://`-only messenger check** via minimal [src/lib/validate-url.ts](../src/lib/validate-url.ts) (`isHttpsUrl`); full `lib/clean-url.ts` remains a Session 6 deliverable.
-- **Open-redirect guard.** `signInAction` only honors path-relative same-origin `callbackUrl`s (must start with `/`, not `//`); otherwise defaults to `/${locale}`.
-- **`(auth)` route group.** Pages live in a URL-invisible `(auth)` group with a shared layout, so URLs are `/{locale}/signin` and `/{locale}/register` (no `/auth/` segment). Auth.js `pages.signIn` and `guards.ts` redirect targets updated from `/auth/signin` → `/signin` to match.
-- **Password strength:** min 8 chars + at least one letter and one digit (basic; richer policy out of scope).
-- Added shadcn-style [Input](../src/components/ui/input.tsx) + [Label](../src/components/ui/label.tsx) primitives to match the existing `button.tsx` convention.
+- **`(auth)` route group, no `/auth/` segment.** Pages live at `src/app/[locale]/(auth)/{forgot-password,reset-password,verify}` → `/{locale}/forgot-password` etc., matching 03b's URL-invisible group (the spec's `/auth/...` paths were pre-03b).
+- **Tokens hashed at rest with SHA-256, not bcrypt.** [src/lib/tokens.ts](../src/lib/tokens.ts): a 32-byte random value is the raw token (in the emailed link); only its SHA-256 digest is stored in `{Email,Password}…Token.token` (`@unique`). SHA-256 is deterministic (so we can look the record up on consume) and fine for high-entropy values; bcrypt stays reserved for low-entropy passwords. Reset TTL ~1h, verify TTL ~24h.
+- **Single-use, atomic consume.** Reset and verify each `$transaction([update, delete])` so the token is destroyed as the password/`emailVerified` is written. Expired tokens are also deleted on lookup.
+- **Deferral gate in [src/lib/email.ts](../src/lib/email.ts).** `sendEmail` no-ops (dev: logs the link) when `AUTH_EMAIL_ENABLED !== "true"`; when on, it throws (no provider until Session 13) rather than silently dropping prod mail. Single switch reused by Sessions 8 & 13.
+- **Verification is a confirm-button POST, not a bare GET.** The project's own architecture lists Telegram/WhatsApp/Signal link-preview crawlers as clients; a GET-consumes-token `/verify` would let a prefetch burn the single-use token. The page renders a form; the token is only consumed on human submit (`verifyEmailAction`).
+- **Verification issued at registration**, best-effort + non-blocking (wrapped in try/catch around `issueEmailVerification`), behind the gate — never breaks register, never enforced at sign-in.
+- **Non-enumerating `forgot-password`.** `forgotPasswordAction` always returns generic `{ success: true }`; work happens only for a real non-deleted user and all failures are swallowed.
+- **Shared password rule** extracted to `passwordField` in [schemas.ts](../src/features/users/schemas.ts), reused by register + reset.
 
-### Files
+## Owner steps (need credentials / local env — not done in code)
 
-- Schemas: [src/features/users/schemas.ts](../src/features/users/schemas.ts)
-- Server actions: [src/actions/auth.ts](../src/actions/auth.ts)
-- Forms: [src/components/auth/RegisterForm.tsx](../src/components/auth/RegisterForm.tsx), [SignInForm.tsx](../src/components/auth/SignInForm.tsx)
-- Pages: [src/app/[locale]/(auth)/register/page.tsx](<../src/app/[locale]/(auth)/register/page.tsx>), [signin/page.tsx](<../src/app/[locale]/(auth)/signin/page.tsx>), shared [layout.tsx](<../src/app/[locale]/(auth)/layout.tsx>)
-- i18n keys: `Auth` namespace in [messages/en.json](../messages/en.json) + [messages/uk.json](../messages/uk.json)
+- **Add `AUTH_EMAIL_ENABLED` to `.env.example` and keep it unset/`false`** until Session 13. (Env files are permission-blocked from edits here.) Optional: `AUTH_URL` / `NEXTAUTH_URL` is used to build absolute links in emails; defaults to `http://localhost:3000` in dev.
+- No DB migration needed — `EmailVerificationToken` / `PasswordResetToken` tables already exist (Session 2).
 
-## First-admin bootstrap
+### Gotchas
 
-## Owner steps (need credentials — not done in code)
+- The deferral flag must not leak mail pre-domain; it's the single switch Sessions 8/13 flip on.
+- Pages are localized under `[locale]` — same Auth.js `pages` ↔ next-intl interplay as [03b](../docs/todos/03b-registration-signin.md).
+- Note the URL question: 03b moved auth pages into a URL-invisible `(auth)` group (`/{locale}/signin`, no `/auth/` segment). The 03c spec lists `/auth/forgot-password`, `/auth/reset-password`, `/auth/verify` — decide at start whether to keep them inside `(auth)` (→ `/{locale}/forgot-password` …) for consistency with 03b.
 
 ## Acceptance — all must pass
 
-- [ ] Register → password sign-in works end-to-end.
-- [ ] Passwords hashed (never plaintext); the JWT session persists across requests.
-- [ ] Registration blocked without first name + surname + ≥1 contact channel (phone or `https://` messenger URL).
-- [ ] Register / sign-in responses don't reveal whether an email exists.
-- [ ] `/uk/{signin,register}` renders Ukrainian chrome; `/en/{signin,register}` English.
+_Code-complete; typecheck + lint + build green. Runtime e2e (dev) pending owner, same as 03b._
+
+- [x] Verification + reset flows exist and run behind `AUTH_EMAIL_ENABLED` with **no external mail sent** pre-domain.
+- [x] `forgot-password` response is non-enumerating.
+- [x] Sign-in is **not** blocked on an unverified email (enforcement deferred to Session 13).
+- [x] `PasswordResetToken` stored hashed, short expiry, single-use; reset re-hashes password.
+- [x] `EmailVerificationToken` sets `User.emailVerified`, longer expiry, single-use.
+- [x] `/uk` vs `/en` chrome renders correctly for verify / forgot-password / reset-password.
 
 ## References
 
-- [docs/todos/03b-registration-signin.md](../docs/todos/03b-registration-signin.md)
+- [docs/todos/03c-verification-reset.md](../docs/todos/03c-verification-reset.md)
 - [docs/prd/main.md](../docs/prd/main.md) §"Session 3"
 - [docs/data-model-invariants.md](../docs/data-model-invariants.md)
 

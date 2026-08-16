@@ -16,16 +16,19 @@ const optionalText = z
   .transform((value) => (value === "" ? undefined : value))
   .optional();
 
+// Basic strength: long enough, and not a single character class. Full policy
+// (breach lists etc.) is out of scope; this just blocks the obvious-weak cases.
+// Shared by registration and password reset so the rule stays in one place.
+const passwordField = z
+  .string()
+  .min(8, "passwordTooShort")
+  .regex(/[a-zA-Z]/, "passwordWeak")
+  .regex(/[0-9]/, "passwordWeak");
+
 export const registerSchema = z
   .object({
     email: z.string().trim().min(1, "emailRequired").email("emailInvalid"),
-    // Basic strength: long enough, and not a single character class. Full policy
-    // (breach lists etc.) is out of scope; this just blocks the obvious-weak cases.
-    password: z
-      .string()
-      .min(8, "passwordTooShort")
-      .regex(/[a-zA-Z]/, "passwordWeak")
-      .regex(/[0-9]/, "passwordWeak"),
+    password: passwordField,
     firstName: z.string().trim().min(1, "firstNameRequired"),
     lastName: z.string().trim().min(1, "lastNameRequired"),
     phone: optionalText,
@@ -58,3 +61,20 @@ export const signInSchema = z.object({
 });
 
 export type SignInInput = z.infer<typeof signInSchema>;
+
+// Password reset (Session 3c). `forgot-password` only needs an email; the response
+// is always generic (non-enumerating), so any format issue is handled by the action.
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().min(1, "emailRequired").email("emailInvalid"),
+});
+
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+
+// `reset-password` carries the raw token (from the emailed link) plus the new
+// password, which must satisfy the same strength rule as registration.
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "resetTokenInvalid"),
+  password: passwordField,
+});
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
